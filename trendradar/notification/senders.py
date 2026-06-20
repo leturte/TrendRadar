@@ -33,6 +33,33 @@ from .batch import add_batch_headers, get_max_batch_header_size
 from .formatters import convert_markdown_to_mrkdwn, strip_markdown
 
 
+# 簡體→繁體（台灣用語）輸出轉換：OpenCC s2twp。未安裝 opencc 則原樣返回，不影響運行。
+_OPENCC_CONVERTER = None
+_OPENCC_TRIED = False
+
+
+def _to_traditional(text: Optional[str]) -> Optional[str]:
+    """將輸出文字做簡體→繁體（台灣用語）轉換；英文/數字不受影響，已是繁體則不變。"""
+    global _OPENCC_CONVERTER, _OPENCC_TRIED
+    if not text:
+        return text
+    if not _OPENCC_TRIED:
+        _OPENCC_TRIED = True
+        try:
+            from opencc import OpenCC
+
+            _OPENCC_CONVERTER = OpenCC("s2twp")
+        except Exception as e:  # opencc 未安裝或載入失敗
+            print(f"[繁體化] OpenCC 未啟用（{e}），輸出維持原樣")
+            _OPENCC_CONVERTER = None
+    if _OPENCC_CONVERTER is None:
+        return text
+    try:
+        return _OPENCC_CONVERTER.convert(text)
+    except Exception:
+        return text
+
+
 def _extract_ai_stats(ai_analysis) -> Optional[Dict]:
     """从 AI 分析结果中提取统计数据"""
     if not ai_analysis or not getattr(ai_analysis, "success", False):
@@ -1039,8 +1066,8 @@ def send_to_bark(
 
         # 构建JSON payload
         payload = {
-            "title": report_type,
-            "markdown": batch_content,
+            "title": _to_traditional(report_type),
+            "markdown": _to_traditional(batch_content),
             "device_key": device_key,
             "sound": "default",
             "group": "TrendRadar",
