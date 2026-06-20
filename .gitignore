@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# TrendRadar 執行產生的資料（不該進版本控制）
+output/
+
+# 環境/密鑰
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
